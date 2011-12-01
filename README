@@ -1,0 +1,12 @@
+ABOUT
+
+
+The skosviz tool is a simple program for visualising SKOS-based RDF metadata.
+
+It requires python and graphviz to be installed.
+
+
+CONTACT INFORMATION
+
+
+Reece H. Dunn <msclrhd@gmail.com>

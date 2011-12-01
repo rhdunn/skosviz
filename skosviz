@@ -1,0 +1,93 @@
+#!/usr/bin/python
+
+# Copyright (C) 2011 Reece H. Dunn
+#
+# This file is part of skosviz.
+#
+# skosviz is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# skosviz is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with skosviz.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+import os
+
+from xml.dom import minidom
+
+rdfns  = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+skosns = 'http://www.w3.org/2004/02/skos/core#'
+
+def indent(s, level=0):
+	for i in range(0, level):
+		sys.stdout.write('... ')
+	sys.stdout.write('%s\n' % s)
+
+def byref(skos, ref):
+	for c in skos.getElementsByTagNameNS(skosns, 'Concept'):
+		if c.getAttributeNS(rdfns, 'ID') == ref:
+			return c
+	raise Exception('skos:Concept "%s" not found.' % ref)
+
+def select(parent, ns, name):
+	ret = []
+	for node in parent.childNodes:
+		if node.nodeType == node.ELEMENT_NODE and node.localName == name and node.namespaceURI == ns:
+			ret.append(node)
+	return ret
+
+def text(parent):
+	for node in parent.childNodes:
+		if node.nodeType == node.TEXT_NODE:
+			return node.nodeValue
+	return ''
+
+# Heirarchical Tree
+
+def tree_viz_concept(skos, ref, level):
+	c = byref(skos, ref)
+	pref = text(select(c, skosns, 'prefLabel')[0])
+	alt  = [text(a) for a in select(c, skosns, 'altLabel')]
+	if len(alt) == 0:
+		indent('%s' % pref, level)
+	else:
+		indent('%s [%s]' % (pref, ', '.join(alt)), level)
+	for node in select(c, skosns, 'narrower'):
+		tree_viz_concept(skos, node.getAttributeNS(rdfns, 'resource').replace('#', ''), level+1)
+
+def tree_viz(skos):
+	for cs in skos.getElementsByTagNameNS(skosns, 'ConceptScheme'):
+		indent('#')
+		for node in select(cs, skosns, 'hasTopConcept'):
+			tree_viz_concept(skos, node.getAttributeNS(rdfns, 'resource').replace('#', ''), 1)
+
+# Main Program
+
+visualisations = {
+	'tree': ('heirarchical tree', tree_viz)
+}
+
+try:
+	viz  = sys.argv[1]
+	skos = minidom.parse(sys.argv[2]).documentElement
+	description, handler = visualisations[viz]
+except IndexError:
+	print 'usage: skos visualisation skos-file'
+	print '  where visualisation is one of:'
+	for name, v in visualisations.items():
+		description, handler = v
+		print '    %-15s %s' % (name, description)
+
+	sys.exit(1)
+except KeyError:
+	print 'error: unsupported visualisation "%s"' % viz
+	sys.exit(1)
+
+handler(skos)
