@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2011 Reece H. Dunn
 #
@@ -35,16 +36,28 @@ skos = RdfNamespace('http://www.w3.org/2004/02/skos/core#')
 
 # SKOS Object Model
 
-class Concept:
-	def __init__(self, pref, alt, narrower):
-		self.pref     = pref
-		self.alt      = alt
-		self.narrower = narrower
+class ConceptBase:
+	def __init__(self, name, children):
+		self.name     = name
+		self.children = children
 
-class ConceptScheme:
+	def __str__(self):
+		return self.name
+
+class Concept(ConceptBase):
+	def __init__(self, pref, alt, narrower):
+		ConceptBase.__init__(self, pref, narrower)
+		self.alt = alt
+
+	def __str__(self):
+		if len(self.alt) == 0:
+			return self.name
+		else:
+			return '%s [%s]' % (self.name, ', '.join(self.alt))
+
+class ConceptScheme(ConceptBase):
 	def __init__(self, name, top_concepts):
-		self.name         = name
-		self.top_concepts = top_concepts
+		ConceptBase.__init__(self, name, top_concepts)
 
 class SkosLibrary:
 	def __init__(self):
@@ -89,24 +102,29 @@ def parseRdfXml(filename):
 
 # Heirarchical Tree
 
-def indent(s, level=0):
-	for i in range(0, level):
-		sys.stdout.write('... ')
-	sys.stdout.write('%s\n' % s)
-
-def tree_viz_concept(skos, c, level):
-	if len(c.alt) == 0:
-		indent('%s' % c.pref, level)
+def tree_viz_node(c, padding, end):
+	if end:
+		branch = u'└─'
 	else:
-		indent('%s [%s]' % (c.pref, ', '.join(c.alt)), level)
-	for n in c.narrower:
-		tree_viz_concept(skos, skos.concepts[n], level+1)
+		branch = u'├─'
+	sys.stdout.write(u'%s%s%s\n' % (padding, branch, c))
+
+def tree_viz_impl(skos, c, padding, end=False):
+	tree_viz_node(c, padding[:-1], end=end)
+	padding = padding + ' '
+	for i, child in enumerate(c.children):
+		n = skos.concepts[child]
+		if len(n.children) != 0:
+			if i == len(c.children)-1:
+				tree_viz_impl(skos, n, padding + ' ', end=True)
+			else:
+				tree_viz_impl(skos, n, padding + u'│')
+		else:
+			tree_viz_node(n, padding, end=i == len(c.children)-1)
 
 def tree_viz(skos):
-	for cs in skos.schemes.values():
-		indent(cs.name)
-		for c in cs.top_concepts:
-			tree_viz_concept(skos, skos.concepts[c], 1)
+	for c in skos.schemes.values():
+		tree_viz_impl(skos, c, ' ', end=True)
 
 # Main Program
 
