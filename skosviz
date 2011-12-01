@@ -22,26 +22,36 @@ import os
 
 from xml.dom import minidom
 
-rdfns  = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-skosns = 'http://www.w3.org/2004/02/skos/core#'
+class RdfNamespace:
+	def __init__(self, ns):
+		self.ns = ns
 
-def indent(s, level=0):
-	for i in range(0, level):
-		sys.stdout.write('... ')
-	sys.stdout.write('%s\n' % s)
+	def __getattr__(self, name):
+		return (self.ns, name)
 
-def byref(skos, ref):
-	for c in skos.getElementsByTagNameNS(skosns, 'Concept'):
-		if c.getAttributeNS(rdfns, 'ID') == ref:
-			return c
-	raise Exception('skos:Concept "%s" not found.' % ref)
+rdf  = RdfNamespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+dc   = RdfNamespace('http://purl.org/dc/elements/1.1/')
+skos = RdfNamespace('http://www.w3.org/2004/02/skos/core#')
 
-def select(parent, ns, name):
-	ret = []
-	for node in parent.childNodes:
-		if node.nodeType == node.ELEMENT_NODE and node.localName == name and node.namespaceURI == ns:
-			ret.append(node)
-	return ret
+# SKOS Object Model
+
+class Concept:
+	def __init__(self, pref, alt, narrower):
+		self.pref     = pref
+		self.alt      = alt
+		self.narrower = narrower
+
+class ConceptScheme:
+	def __init__(self, name, top_concepts):
+		self.name         = name
+		self.top_concepts = top_concepts
+
+class SkosLibrary:
+	def __init__(self):
+		self.concepts = {}
+		self.schemes  = {}
+
+# RDF/XML+SKOS Parser
 
 def text(parent):
 	for node in parent.childNodes:
@@ -49,45 +59,62 @@ def text(parent):
 			return node.nodeValue
 	return ''
 
+def select(parent, ref):
+	ret = []
+	ns, name = ref
+	for node in parent.childNodes:
+		if node.nodeType == node.ELEMENT_NODE and node.localName == name and node.namespaceURI == ns:
+			ret.append(node)
+	return ret
+
+def attr(parent, ref):
+	ns, name = ref
+	return parent.getAttributeNS(ns, name)
+
+def parseRdfXml(filename):
+	ret  = SkosLibrary()
+	dom  = minidom.parse(filename).documentElement
+	for c in select(dom, skos.Concept):
+		pref     = text(select(c, skos.prefLabel)[0])
+		alt      = [text(a) for a in select(c, skos.altLabel)]
+		ref      = '#%s' % attr(c, rdf.ID)
+		narrower = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
+		ret.concepts[ref] = Concept(pref, alt, narrower)
+	for c in select(dom, skos.ConceptScheme):
+		ref  = '#%s' % attr(c, rdf.ID)
+		name = text(select(c, dc.title)[0])
+		top  = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
+		ret.schemes[ref] = ConceptScheme(name, top)
+	return ret
+
 # Heirarchical Tree
 
-def tree_viz_concept(skos, ref, level):
-	c = byref(skos, ref)
-	pref = text(select(c, skosns, 'prefLabel')[0])
-	alt  = [text(a) for a in select(c, skosns, 'altLabel')]
-	if len(alt) == 0:
-		indent('%s' % pref, level)
+def indent(s, level=0):
+	for i in range(0, level):
+		sys.stdout.write('... ')
+	sys.stdout.write('%s\n' % s)
+
+def tree_viz_concept(skos, c, level):
+	if len(c.alt) == 0:
+		indent('%s' % c.pref, level)
 	else:
-		indent('%s [%s]' % (pref, ', '.join(alt)), level)
-	for node in select(c, skosns, 'narrower'):
-		tree_viz_concept(skos, node.getAttributeNS(rdfns, 'resource').replace('#', ''), level+1)
+		indent('%s [%s]' % (c.pref, ', '.join(c.alt)), level)
+	for n in c.narrower:
+		tree_viz_concept(skos, skos.concepts[n], level+1)
 
 def tree_viz(skos):
-	for cs in skos.getElementsByTagNameNS(skosns, 'ConceptScheme'):
-		indent('#')
-		for node in select(cs, skosns, 'hasTopConcept'):
-			tree_viz_concept(skos, node.getAttributeNS(rdfns, 'resource').replace('#', ''), 1)
+	for cs in skos.schemes.values():
+		indent(cs.name)
+		for c in cs.top_concepts:
+			tree_viz_concept(skos, skos.concepts[c], 1)
 
 # Main Program
 
-visualisations = {
-	'tree': ('heirarchical tree', tree_viz)
-}
-
 try:
-	viz  = sys.argv[1]
-	skos = minidom.parse(sys.argv[2]).documentElement
-	description, handler = visualisations[viz]
+	filename = sys.argv[1]
 except IndexError:
-	print 'usage: skos visualisation skos-file'
-	print '  where visualisation is one of:'
-	for name, v in visualisations.items():
-		description, handler = v
-		print '    %-15s %s' % (name, description)
-
-	sys.exit(1)
-except KeyError:
-	print 'error: unsupported visualisation "%s"' % viz
+	print 'usage: skosviz skos-file'
 	sys.exit(1)
 
-handler(skos)
+data = parseRdfXml(filename)
+tree_viz(data)
