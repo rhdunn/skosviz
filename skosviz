@@ -47,7 +47,8 @@ class ConceptBase:
 class Concept(ConceptBase):
 	def __init__(self, pref, alt, narrower):
 		ConceptBase.__init__(self, pref, narrower)
-		self.alt = alt
+		self.alt     = alt
+		self.visited = False
 
 	def __str__(self):
 		if len(self.alt) == 0:
@@ -114,6 +115,7 @@ def tree_viz_impl(skos, c, padding, end=False):
 	padding = padding + ' '
 	for i, child in enumerate(c.children):
 		n = skos.concepts[child]
+		n.visited = True
 		if len(n.children) != 0:
 			if i == len(c.children)-1:
 				tree_viz_impl(skos, n, padding + ' ', end=True)
@@ -125,6 +127,9 @@ def tree_viz_impl(skos, c, padding, end=False):
 def tree_viz(skos):
 	for c in skos.schemes.values():
 		tree_viz_impl(skos, c, ' ', end=True)
+	for c in skos.concepts.values():
+		if not c.visited:
+			print c
 
 # Main Program
 
