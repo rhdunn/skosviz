@@ -20,6 +20,7 @@
 
 import sys
 import os
+import codecs
 
 from xml.dom import minidom
 
@@ -103,41 +104,77 @@ def parseRdfXml(filename):
 
 # Heirarchical Tree
 
-def tree_viz_node(c, padding, end):
+def tree_viz_node(c, padding, options, end):
 	if end:
 		branch = u'└─'
 	else:
 		branch = u'├─'
-	sys.stdout.write(u'%s%s%s\n' % (padding, branch, c))
+	options['output'].write(u'%s%s%s\n' % (padding, branch, c))
 
-def tree_viz_impl(skos, c, padding, end=False):
-	tree_viz_node(c, padding[:-1], end=end)
+def tree_viz_impl(skos, c, padding, options, end=False):
+	tree_viz_node(c, padding[:-1], options, end=end)
 	padding = padding + ' '
 	for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
 		n = skos.concepts[child]
 		n.visited = True
 		if len(n.children) != 0:
 			if i == len(c.children)-1:
-				tree_viz_impl(skos, n, padding + ' ', end=True)
+				tree_viz_impl(skos, n, padding + ' ', options, end=True)
 			else:
-				tree_viz_impl(skos, n, padding + u'│')
+				tree_viz_impl(skos, n, padding + u'│', options)
 		else:
-			tree_viz_node(n, padding, end=i == len(c.children)-1)
+			tree_viz_node(n, padding, options, end=i == len(c.children)-1)
 
-def tree_viz(skos):
+def tree_viz(skos, options):
 	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
-		tree_viz_impl(skos, c, ' ', end=True)
+		tree_viz_impl(skos, c, ' ', options, end=True)
 	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
 		if not c.visited:
-			print c
+			options['output'].write('%s\n' % str(c))
 
 # Main Program
 
-try:
-	filename = sys.argv[1]
-except IndexError:
-	print 'usage: skosviz skos-file'
+options = {
+	'output':   sys.stdout,
+	'filename': None,
+}
+
+def usage():
+	sys.stdout.write("""usage: skosviz OPTIONS skos-file
+where OPTIONS are:
+    -o FILE, --output FILE   save the visualisation to FILE.
+""")
 	sys.exit(1)
 
-data = parseRdfXml(filename)
-tree_viz(data)
+def cleanup(options):
+	if options['output'] != sys.stdout:
+		options['output'].close()
+
+try:
+	opt = None
+	for arg in sys.argv[1:]:
+		if not opt:
+			if arg in ['-o', '--output']:
+				opt = 'output'
+			else:
+				if options['filename'] or arg.startswith('-'):
+					usage()
+				options['filename'] = arg
+		else:
+			if opt == 'output':
+				if arg != '-':
+					options[opt] = codecs.open(arg, 'w', 'utf-8')
+			else:
+				options[opt] = arg
+			opt = None
+
+	if not options['filename']:
+		usage()
+
+	data = parseRdfXml(options['filename'])
+	tree_viz(data, options)
+except:
+	cleanup(options)
+	raise
+finally:
+	cleanup(options)
