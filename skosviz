@@ -102,7 +102,7 @@ def parseRdfXml(filename):
 		ret.schemes[ref] = ConceptScheme(name, top)
 	return ret
 
-# Heirarchical Tree
+# Text Formatter
 
 def tree_viz_node(c, padding, options, end):
 	if end:
@@ -130,7 +130,26 @@ def tree_viz(skos, options):
 		tree_viz_impl(skos, c, ' ', options, end=True)
 	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
 		if not c.visited:
-			options['output'].write('%s\n' % str(c))
+			options['output'].write('%s\n' % c)
+
+# Dot Formatter
+
+def dot_viz_impl(skos, c, options):
+	options['output'].write('\t"%s"\n' % c.name)
+	for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
+		n = skos.concepts[child]
+		n.visited = True
+		options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
+		dot_viz_impl(skos, n, options)
+
+def dot_viz(skos, options):
+	options['output'].write('digraph "SKOS Visualisation" {\n')
+	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
+		dot_viz_impl(skos, c, options)
+	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
+		if not c.visited:
+			options['output'].write('\t"%s"\n' % c.name)
+	options['output'].write('}\n')
 
 # Main Program
 
@@ -139,10 +158,18 @@ options = {
 	'filename': None,
 }
 
+formatters = {
+	'text': tree_viz,
+	'dot':  dot_viz,
+}
+
 def usage():
 	sys.stdout.write("""usage: skosviz OPTIONS skos-file
 where OPTIONS are:
-    -o FILE, --output FILE   save the visualisation to FILE.
+    -o FILE, --output FILE     save the visualisation to FILE (or - for stdout).
+    -f FORMAT, --format FORMAT the file format for the output:
+        text   utf-8 encoded text [default]
+        dot    graphviz graph source
 """)
 	sys.exit(1)
 
@@ -156,6 +183,8 @@ try:
 		if not opt:
 			if arg in ['-o', '--output']:
 				opt = 'output'
+			elif arg in ['-f', '--format']:
+				opt = 'format'
 			else:
 				if options['filename'] or arg.startswith('-'):
 					usage()
@@ -164,6 +193,10 @@ try:
 			if opt == 'output':
 				if arg != '-':
 					options[opt] = codecs.open(arg, 'w', 'utf-8')
+			elif opt == 'format':
+				if not arg in formatters.keys():
+					usage()
+				options[opt] = arg
 			else:
 				options[opt] = arg
 			opt = None
@@ -172,7 +205,7 @@ try:
 		usage()
 
 	data = parseRdfXml(options['filename'])
-	tree_viz(data, options)
+	formatters[options['format']](data, options)
 except:
 	cleanup(options)
 	raise
