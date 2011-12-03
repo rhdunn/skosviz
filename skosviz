@@ -113,7 +113,7 @@ def tree_viz_node(c, padding, end):
 def tree_viz_impl(skos, c, padding, end=False):
 	tree_viz_node(c, padding[:-1], end=end)
 	padding = padding + ' '
-	for i, child in enumerate(c.children):
+	for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
 		n = skos.concepts[child]
 		n.visited = True
 		if len(n.children) != 0:
@@ -125,9 +125,9 @@ def tree_viz_impl(skos, c, padding, end=False):
 			tree_viz_node(n, padding, end=i == len(c.children)-1)
 
 def tree_viz(skos):
-	for c in skos.schemes.values():
+	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
 		tree_viz_impl(skos, c, ' ', end=True)
-	for c in skos.concepts.values():
+	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
 		if not c.visited:
 			print c
 
