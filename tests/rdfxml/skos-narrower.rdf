@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xml:base="http://example.org/skosviz/tests"
+>
+
+<skos:ConceptScheme rdf:about="#">
+	<dc:title>Simple</dc:title>
+	<dc:publisher>Reece H. Dunn</dc:publisher>
+	<dc:creator>Reece H. Dunn</dc:creator>
+	<skos:hasTopConcept rdf:resource="#a"/>
+	<skos:hasTopConcept rdf:resource="#b"/>
+</skos:ConceptScheme>
+
+<skos:Concept rdf:ID="a">
+	<skos:prefLabel xml:lang="en">A</skos:prefLabel>
+	<skos:narrower rdf:resource="#c" />
+	<skos:inScheme rdf:resource="#"/>
+</skos:Concept>
+
+<skos:Concept rdf:ID="b">
+	<skos:prefLabel xml:lang="en">B</skos:prefLabel>
+	<skos:inScheme rdf:resource="#"/>
+</skos:Concept>
+
+<skos:Concept rdf:ID="c">
+	<skos:prefLabel xml:lang="en">C</skos:prefLabel>
+	<skos:inScheme rdf:resource="#"/>
+</skos:Concept>
+
+</rdf:RDF>

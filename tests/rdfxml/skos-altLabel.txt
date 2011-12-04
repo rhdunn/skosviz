@@ -1,0 +1,3 @@
+└─Simple
+  ├─A [alt1, alt2]
+  └─B [alt3]
