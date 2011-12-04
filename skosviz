@@ -86,17 +86,23 @@ def attr(parent, ref):
 	ns, name = ref
 	return parent.getAttributeNS(ns, name)
 
+def getref(c):
+	idref = attr(c, rdf.ID)
+	if idref:
+		return '#%s' % idref
+	return attr(c, rdf.about)
+
 def parseRdfXml(filename):
 	ret  = SkosLibrary()
 	dom  = minidom.parse(filename).documentElement
 	for c in select(dom, skos.Concept):
 		pref     = text(select(c, skos.prefLabel)[0])
 		alt      = [text(a) for a in select(c, skos.altLabel)]
-		ref      = '#%s' % attr(c, rdf.ID)
+		ref      = getref(c)
 		narrower = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
 		ret.concepts[ref] = Concept(pref, alt, narrower)
 	for c in select(dom, skos.ConceptScheme):
-		ref  = '#%s' % attr(c, rdf.ID)
+		ref  = getref(c)
 		name = text(select(c, dc.title)[0])
 		top  = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
 		ret.schemes[ref] = ConceptScheme(name, top)
