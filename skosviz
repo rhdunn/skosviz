@@ -41,6 +41,7 @@ class ConceptBase:
 	def __init__(self, name, children):
 		self.name     = name
 		self.children = children
+		self.parent   = None
 
 	def __str__(self):
 		return self.name
@@ -49,7 +50,6 @@ class Concept(ConceptBase):
 	def __init__(self, pref, alt, narrower):
 		ConceptBase.__init__(self, pref, narrower)
 		self.alt     = alt
-		self.visited = False
 
 	def __str__(self):
 		if len(self.alt) == 0:
@@ -106,6 +106,11 @@ def parseRdfXml(filename):
 		name = text(select(c, dc.title)[0])
 		top  = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
 		ret.schemes[ref] = ConceptScheme(name, top)
+		for n in top:
+			ret.concepts[n].parent = ref
+	for ref, c in ret.concepts.items():
+		for n in c.children:
+			ret.concepts[n].parent = ref
 	return ret
 
 # Text Formatter
@@ -135,26 +140,23 @@ def tree_viz(skos, options):
 	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
 		tree_viz_impl(skos, c, ' ', options, end=True)
 	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
-		if not c.visited:
-			options['output'].write('%s\n' % c)
+		if not c.parent:
+			tree_viz_impl(skos, c, ' ', options, end=True)
 
 # Dot Formatter
-
-def dot_viz_impl(skos, c, options):
-	options['output'].write('\t"%s"\n' % c.name)
-	for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
-		n = skos.concepts[child]
-		n.visited = True
-		options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
-		dot_viz_impl(skos, n, options)
 
 def dot_viz(skos, options):
 	options['output'].write('digraph "SKOS Visualisation" {\n')
 	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
-		dot_viz_impl(skos, c, options)
+		options['output'].write('\t"%s"\n' % c.name)
+		for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
+			n = skos.concepts[child]
+			options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
 	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
-		if not c.visited:
-			options['output'].write('\t"%s"\n' % c.name)
+		options['output'].write('\t"%s"\n' % c.name)
+		for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
+			n = skos.concepts[child]
+			options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
 	options['output'].write('}\n')
 
 # Main Program
