@@ -136,30 +136,23 @@ def tree_viz_impl(skos, c, padding, options, end=False):
 		else:
 			tree_viz_node(n, padding, options, end=i == len(c.children)-1)
 
-def tree_viz(skos, options):
-	roots = []
-	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
-		roots.append(c)
-	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
-		if not c.parent:
-			roots.append(c)
+def tree_viz(skos, roots, options):
 	for i, c in enumerate(sorted(roots, key=lambda c: c.name)):
 		tree_viz_impl(skos, c, u'│', options, end=i == len(roots)-1)
 
 # Dot Formatter
 
-def dot_viz(skos, options):
+def dot_viz_impl(skos, c, options):
+	options['output'].write('\t"%s"\n' % c.name)
+	for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
+		n = skos.concepts[child]
+		options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
+		dot_viz_impl(skos, n, options)
+
+def dot_viz(skos, roots, options):
 	options['output'].write('digraph "SKOS Visualisation" {\n')
-	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
-		options['output'].write('\t"%s"\n' % c.name)
-		for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
-			n = skos.concepts[child]
-			options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
-	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
-		options['output'].write('\t"%s"\n' % c.name)
-		for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
-			n = skos.concepts[child]
-			options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
+	for c in sorted(roots, key=lambda c: c.name):
+		dot_viz_impl(skos, c, options)
 	options['output'].write('}\n')
 
 # Main Program
@@ -215,8 +208,14 @@ try:
 	if not options['filename']:
 		usage()
 
-	data = parseRdfXml(options['filename'])
-	formatters[options['format']](data, options)
+	skos = parseRdfXml(options['filename'])
+	roots = []
+	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
+		roots.append(c)
+	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
+		if not c.parent:
+			roots.append(c)
+	formatters[options['format']](skos, roots, options)
 except:
 	cleanup(options)
 	raise
