@@ -137,11 +137,14 @@ def tree_viz_impl(skos, c, padding, options, end=False):
 			tree_viz_node(n, padding, options, end=i == len(c.children)-1)
 
 def tree_viz(skos, options):
+	roots = []
 	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
-		tree_viz_impl(skos, c, ' ', options, end=True)
+		roots.append(c)
 	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
 		if not c.parent:
-			tree_viz_impl(skos, c, ' ', options, end=True)
+			roots.append(c)
+	for i, c in enumerate(sorted(roots, key=lambda c: c.name)):
+		tree_viz_impl(skos, c, u'│', options, end=i == len(roots)-1)
 
 # Dot Formatter
 
