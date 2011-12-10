@@ -63,8 +63,7 @@ class ConceptScheme(ConceptBase):
 
 class SkosLibrary:
 	def __init__(self):
-		self.concepts = {}
-		self.schemes  = {}
+		self.refs = {}
 
 # RDF/XML+SKOS Parser
 
@@ -100,17 +99,17 @@ def parseRdfXml(filename):
 		alt      = [text(a) for a in select(c, skos.altLabel)]
 		ref      = getref(c)
 		narrower = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
-		ret.concepts[ref] = Concept(pref, alt, narrower)
+		ret.refs[ref] = Concept(pref, alt, narrower)
 	for c in select(dom, skos.ConceptScheme):
 		ref  = getref(c)
 		name = text(select(c, dc.title)[0])
 		top  = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
-		ret.schemes[ref] = ConceptScheme(name, top)
+		ret.refs[ref] = ConceptScheme(name, top)
 		for n in top:
-			ret.concepts[n].parent = ref
-	for ref, c in ret.concepts.items():
+			ret.refs[n].parent = ref
+	for ref, c in ret.refs.items():
 		for n in c.children:
-			ret.concepts[n].parent = ref
+			ret.refs[n].parent = ref
 	return ret
 
 # Text Formatter
@@ -125,9 +124,8 @@ def tree_viz_node(c, padding, options, end):
 def tree_viz_impl(skos, c, padding, options, end=False):
 	tree_viz_node(c, padding[:-1], options, end=end)
 	padding = padding + ' '
-	for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
-		n = skos.concepts[child]
-		n.visited = True
+	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
+		n = skos.refs[child]
 		if len(n.children) != 0:
 			if i == len(c.children)-1:
 				tree_viz_impl(skos, n, padding + ' ', options, end=True)
@@ -138,14 +136,14 @@ def tree_viz_impl(skos, c, padding, options, end=False):
 
 def tree_viz(skos, roots, options):
 	for i, c in enumerate(sorted(roots, key=lambda c: c.name)):
-		tree_viz_impl(skos, c, u'│', options, end=i == len(roots)-1)
+		tree_viz_impl(skos, c, ' ', options, end=i == len(roots)-1)
 
 # Dot Formatter
 
 def dot_viz_impl(skos, c, options):
 	options['output'].write('\t"%s"\n' % c.name)
-	for i, child in enumerate(sorted(c.children, key=lambda c: skos.concepts[c].name)):
-		n = skos.concepts[child]
+	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
+		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
 		dot_viz_impl(skos, n, options)
 
@@ -210,9 +208,7 @@ try:
 
 	skos = parseRdfXml(options['filename'])
 	roots = []
-	for c in sorted(skos.schemes.values(), key=lambda c: c.name):
-		roots.append(c)
-	for c in sorted(skos.concepts.values(), key=lambda c: c.name):
+	for c in sorted(skos.refs.values(), key=lambda c: c.name):
 		if not c.parent:
 			roots.append(c)
 	formatters[options['format']](skos, roots, options)
