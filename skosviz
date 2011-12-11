@@ -38,7 +38,8 @@ skos = RdfNamespace('http://www.w3.org/2004/02/skos/core#')
 # SKOS Object Model
 
 class ConceptBase:
-	def __init__(self, name, children):
+	def __init__(self, ref, name, children):
+		self.ref      = ref
 		self.name     = name
 		self.children = children
 		self.parent   = None
@@ -47,9 +48,9 @@ class ConceptBase:
 		return self.name
 
 class Concept(ConceptBase):
-	def __init__(self, pref, alt, narrower):
-		ConceptBase.__init__(self, pref, narrower)
-		self.alt     = alt
+	def __init__(self, ref, pref, alt, narrower):
+		ConceptBase.__init__(self, ref, pref, narrower)
+		self.alt = alt
 
 	def __str__(self):
 		if len(self.alt) == 0:
@@ -58,8 +59,8 @@ class Concept(ConceptBase):
 			return '%s [%s]' % (self.name, ', '.join(self.alt))
 
 class ConceptScheme(ConceptBase):
-	def __init__(self, name, top_concepts):
-		ConceptBase.__init__(self, name, top_concepts)
+	def __init__(self, ref, name, top_concepts):
+		ConceptBase.__init__(self, ref, name, top_concepts)
 
 class SkosLibrary:
 	def __init__(self):
@@ -99,12 +100,12 @@ def parseRdfXml(filename):
 		alt      = [text(a) for a in select(c, skos.altLabel)]
 		ref      = getref(c)
 		narrower = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
-		ret.refs[ref] = Concept(pref, alt, narrower)
+		ret.refs[ref] = Concept(ref, pref, alt, narrower)
 	for c in select(dom, skos.ConceptScheme):
 		ref  = getref(c)
 		name = text(select(c, dc.title)[0])
 		top  = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
-		ret.refs[ref] = ConceptScheme(name, top)
+		ret.refs[ref] = ConceptScheme(ref, name, top)
 		for n in top:
 			ret.refs[n].parent = ref
 	for ref, c in ret.refs.items():
@@ -141,10 +142,10 @@ def tree_viz(skos, roots, options):
 # Dot Formatter
 
 def dot_viz_impl(skos, c, options):
-	options['output'].write('\t"%s"\n' % c.name)
+	options['output'].write('\t"%s" [label="%s"]\n' % (c.ref, c.name))
 	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
 		n = skos.refs[child]
-		options['output'].write('\t"%s" -> "%s"\n' % (c.name, n.name))
+		options['output'].write('\t"%s" -> "%s"\n' % (c.ref, n.ref))
 		dot_viz_impl(skos, n, options)
 
 def dot_viz(skos, roots, options):
