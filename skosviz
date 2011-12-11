@@ -148,14 +148,13 @@ def dot_viz_impl(skos, c, options):
 	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
 		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s"\n' % (c.ref, n.ref))
-		dot_viz_impl(skos, n, options)
 	for i, child in enumerate(sorted(c.exactmatch, key=lambda c: skos.refs[c].name)):
 		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s" [color=blue]\n' % (c.ref, n.ref))
 
 def dot_viz(skos, roots, options):
 	options['output'].write('digraph "SKOS Visualisation" {\n')
-	for c in sorted(roots, key=lambda c: c.name):
+	for c in sorted(skos.refs.values(), key=lambda c: c.name):
 		dot_viz_impl(skos, c, options)
 	options['output'].write('}\n')
 
