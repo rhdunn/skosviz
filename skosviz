@@ -37,31 +37,24 @@ skos = RdfNamespace('http://www.w3.org/2004/02/skos/core#')
 
 # SKOS Object Model
 
-class ConceptBase:
-	def __init__(self, ref, name, children, exactmatch=[]):
-		self.ref      = ref
-		self.name     = name
-		self.children = children
-		self.parent   = None
-		self.exactmatch = exactmatch
+class ConceptNode:
+	def __init__(self, ref, name, alt, children):
+		self.ref       = ref
+		self.name      = name
+		self.alt       = alt
+		self.children  = children
+		self.parent    = None
+		self.relations = []
 
-	def __str__(self):
-		return self.name
-
-class Concept(ConceptBase):
-	def __init__(self, ref, pref, alt, narrower, exactmatch):
-		ConceptBase.__init__(self, ref, pref, narrower, exactmatch)
-		self.alt = alt
+	def add_relations(self, rel, items):
+		for item in items:
+			self.relations.append((rel, item))
 
 	def __str__(self):
 		if len(self.alt) == 0:
 			return self.name
 		else:
 			return '%s [%s]' % (self.name, ', '.join(self.alt))
-
-class ConceptScheme(ConceptBase):
-	def __init__(self, ref, name, top_concepts):
-		ConceptBase.__init__(self, ref, name, top_concepts)
 
 class SkosLibrary:
 	def __init__(self):
@@ -97,18 +90,18 @@ def parseRdfXml(filename):
 	ret  = SkosLibrary()
 	dom  = minidom.parse(filename).documentElement
 	for c in select(dom, skos.Concept):
-		pref       = text(select(c, skos.prefLabel)[0])
-		alt        = [text(a) for a in select(c, skos.altLabel)]
 		ref        = getref(c)
-		narrower   = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
-		exactmatch = [attr(a, rdf.resource) for a in select(c, skos.exactMatch)]
-		ret.refs[ref] = Concept(ref, pref, alt, narrower, exactmatch)
+		name       = text(select(c, skos.prefLabel)[0])
+		alt        = [text(a) for a in select(c, skos.altLabel)]
+		children   = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
+		node = ret.refs[ref] = ConceptNode(ref, name, alt, children)
+		node.add_relations('exactMatch', [attr(a, rdf.resource) for a in select(c, skos.exactMatch)])
 	for c in select(dom, skos.ConceptScheme):
-		ref  = getref(c)
-		name = text(select(c, dc.title)[0])
-		top  = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
-		ret.refs[ref] = ConceptScheme(ref, name, top)
-		for n in top:
+		ref      = getref(c)
+		name     = text(select(c, dc.title)[0])
+		children = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
+		ret.refs[ref] = ConceptNode(ref, name, [], children)
+		for n in children:
 			ret.refs[n].parent = ref
 	for ref, c in ret.refs.items():
 		for n in c.children:
@@ -143,14 +136,18 @@ def tree_viz(skos, roots, options):
 
 # Dot Formatter
 
+colours = {
+	'exactMatch': 'blue',
+}
+
 def dot_viz_impl(skos, c, options):
-	options['output'].write('\t"%s" [label="%s"]\n' % (c.ref, c.name))
+	options['output'].write('\t"%s" [label="%s"]\n' % (c.ref, c.name.replace(' ', '\\n')))
 	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
 		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s"\n' % (c.ref, n.ref))
-	for i, child in enumerate(sorted(c.exactmatch, key=lambda c: skos.refs[c].name)):
+	for i, (t, child) in enumerate(sorted(c.relations, key=lambda (r, c): skos.refs[c].name)):
 		n = skos.refs[child]
-		options['output'].write('\t"%s" -> "%s" [color=blue]\n' % (c.ref, n.ref))
+		options['output'].write('\t"%s" -> "%s" [color=%s]\n' % (c.ref, n.ref, colours[t]))
 
 def dot_viz(skos, roots, options):
 	options['output'].write('digraph "SKOS Visualisation" {\n')
