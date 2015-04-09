@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Reece H. Dunn
+# Copyright (C) 2011-2015 Reece H. Dunn
 #
 # This file is part of skosviz.
 #
@@ -21,6 +21,7 @@
 import sys
 import os
 import codecs
+import subprocess
 
 from xml.dom import minidom
 
@@ -34,6 +35,25 @@ class RdfNamespace:
 rdf  = RdfNamespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
 dc   = RdfNamespace('http://purl.org/dc/elements/1.1/')
 skos = RdfNamespace('http://www.w3.org/2004/02/skos/core#')
+
+def parse_rdf(filename, input_format=None):
+	with open(filename, 'rb') as f:
+		srcdata = f.read()
+
+	if not input_format:
+		if srcdata.startswith(b'#') or srcdata.startswith(b'@prefix'):
+			input_format = 'turtle'
+		elif srcdata.startswith(b'<!--') or srcdata.startswith(b'<?xml'):
+			input_format = 'rdfxml'
+		else:
+			input_format = 'ntriples'
+
+	if input_format == 'rdfxml':
+		return minidom.parseString(srcdata).documentElement
+
+	rapper = subprocess.Popen(['rapper', '-', filename, '--input', input_format, '--output', 'rdfxml-abbrev'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+	stdout, stderr = rapper.communicate(input=srcdata)
+	return minidom.parseString(stdout).documentElement
 
 # SKOS Object Model
 
@@ -86,9 +106,9 @@ def getref(c):
 		return '#%s' % idref
 	return attr(c, rdf.about)
 
-def parseRdfXml(filename):
+def parse_skos(filename):
 	ret  = SkosLibrary()
-	dom  = minidom.parse(filename).documentElement
+	dom  = parse_rdf(filename)
 	for c in select(dom, skos.Concept):
 		ref        = getref(c)
 		name       = text(select(c, skos.prefLabel)[0])
@@ -208,7 +228,7 @@ try:
 	if not options['filename']:
 		usage()
 
-	skos = parseRdfXml(options['filename'])
+	skos = parse_skos(options['filename'])
 	roots = []
 	for c in sorted(skos.refs.values(), key=lambda c: c.name):
 		if not c.parent:
