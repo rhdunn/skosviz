@@ -96,6 +96,12 @@ def select(parent, ref):
 			ret.append(node)
 	return ret
 
+def select_any(parent, *refs):
+	for ref in refs:
+		ret = select(parent, ref)
+		if len(ret) != 0:
+			return ret
+
 def attr(parent, ref):
 	ns, name = ref
 	return parent.getAttributeNS(ns, name)
@@ -118,7 +124,7 @@ def parse_skos(filename):
 		node.add_relations('exactMatch', [attr(a, rdf.resource) for a in select(c, skos.exactMatch)])
 	for c in select(dom, skos.ConceptScheme):
 		ref      = getref(c)
-		name     = text(select(c, dc.title)[0])
+		name     = text(select_any(c, dc.title, skos.prefLabel)[0])
 		children = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
 		ret.refs[ref] = ConceptNode(ref, name, [], children)
 		for n in children:
