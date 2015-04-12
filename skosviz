@@ -102,6 +102,11 @@ def select_any(parent, *refs):
 		if len(ret) != 0:
 			return ret
 
+def select_all(parent, *refs):
+	for ref in refs:
+		for ret in select(parent, ref):
+			yield ret
+
 def attr(parent, ref):
 	ns, name = ref
 	return parent.getAttributeNS(ns, name)
@@ -118,7 +123,7 @@ def parse_skos(filename):
 	for c in select(dom, skos.Concept):
 		ref        = getref(c)
 		name       = text(select(c, skos.prefLabel)[0])
-		alt        = [text(a) for a in select(c, skos.altLabel)]
+		alt        = [text(a) for a in select_all(c, skos.altLabel, skos.notation)]
 		children   = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
 		node = ret.refs[ref] = ConceptNode(ref, name, alt, children)
 		node.add_relations('exactMatch', [attr(a, rdf.resource) for a in select(c, skos.exactMatch)])
