@@ -124,9 +124,12 @@ def parse_skos(filename):
 		ref        = getref(c)
 		name       = text(select(c, skos.prefLabel)[0])
 		alt        = [text(a) for a in select_all(c, skos.altLabel, skos.notation)]
-		children   = [attr(a, rdf.resource) for a in select(c, skos.narrower)]
+		children   = [attr(a, rdf.resource) for a in select_all(c, skos.narrower, skos.narrowMatch, skos.narrowerTransitive)]
 		node = ret.refs[ref] = ConceptNode(ref, name, alt, children)
-		node.add_relations('exactMatch', [attr(a, rdf.resource) for a in select(c, skos.exactMatch)])
+		node.add_relations('exact',   [attr(a, rdf.resource) for a in select(c, skos.exactMatch)])
+		node.add_relations('close',   [attr(a, rdf.resource) for a in select(c, skos.closeMatch)])
+		node.add_relations('broader', [attr(a, rdf.resource) for a in select_all(c, skos.broader, skos.broadMatch, skos.broaderTransitive)])
+		node.add_relations('related', [attr(a, rdf.resource) for a in select_all(c, skos.related, skos.relatedMatch)])
 	for c in select(dom, skos.ConceptScheme):
 		ref      = getref(c)
 		name     = text(select_any(c, dc.title, skos.prefLabel)[0])
@@ -168,7 +171,10 @@ def tree_viz(skos, roots, options):
 # Dot Formatter
 
 colours = {
-	'exactMatch': 'blue',
+	'related': 'red',
+	'exact': 'blue',
+	'close': 'teal',
+	'broader': 'orange',
 }
 
 def dot_viz_impl(skos, c, options):
