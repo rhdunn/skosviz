@@ -176,7 +176,7 @@ def dot_viz_impl(skos, c, options):
 	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
 		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s"\n' % (c.ref, n.ref))
-	for i, (t, child) in enumerate(sorted(c.relations, key=lambda r, c: skos.refs[c].name)):
+	for i, (t, child) in enumerate(sorted(c.relations, key=lambda c: skos.refs[c[1]].name)):
 		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s" [color=%s]\n' % (c.ref, n.ref, colours[t]))
 
