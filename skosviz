@@ -58,7 +58,8 @@ def parse_rdf(filename, input_format=None):
 # SKOS Object Model
 
 class ConceptNode:
-	def __init__(self, ref, name, alt, children):
+	def __init__(self, nodetype, ref, name, alt, children):
+		self.nodetype  = nodetype
 		self.ref       = ref
 		self.name      = name
 		self.alt       = alt
@@ -125,7 +126,7 @@ def parse_skos(filename):
 		name       = text(select(c, skos.prefLabel)[0])
 		alt        = [text(a) for a in select_all(c, skos.altLabel, skos.notation)]
 		children   = [attr(a, rdf.resource) for a in select_all(c, skos.narrower, skos.narrowMatch, skos.narrowerTransitive)]
-		node = ret.refs[ref] = ConceptNode(ref, name, alt, children)
+		node = ret.refs[ref] = ConceptNode('Concept', ref, name, alt, children)
 		node.add_relations('exact',   [attr(a, rdf.resource) for a in select(c, skos.exactMatch)])
 		node.add_relations('close',   [attr(a, rdf.resource) for a in select(c, skos.closeMatch)])
 		node.add_relations('broader', [attr(a, rdf.resource) for a in select_all(c, skos.broader, skos.broadMatch, skos.broaderTransitive)])
@@ -134,7 +135,7 @@ def parse_skos(filename):
 		ref      = getref(c)
 		name     = text(select_any(c, dc.title, skos.prefLabel)[0])
 		children = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
-		ret.refs[ref] = ConceptNode(ref, name, [], children)
+		ret.refs[ref] = ConceptNode('ConceptScheme', ref, name, [], children)
 		for n in children:
 			ret.refs[n].parent = ref
 	for ref, c in ret.refs.items():
@@ -178,7 +179,10 @@ colours = {
 }
 
 def dot_viz_impl(skos, c, options):
-	options['output'].write('\t"%s" [label="%s"]\n' % (c.ref, c.name.replace(' ', '\\n')))
+	if c.nodetype == 'ConceptScheme':
+		options['output'].write('\t"%s" [label="%s"]\n' % (c.ref, c.name.replace(' ', '\\n')))
+	else:
+		options['output'].write('\t"%s" [label="%s", shape=none]\n' % (c.ref, c.name.replace(' ', '\\n')))
 	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
 		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s"\n' % (c.ref, n.ref))
