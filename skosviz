@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011-2015 Reece H. Dunn
+# Copyright (C) 2011-2016 Reece H. Dunn
 #
 # This file is part of skosviz.
 #
@@ -201,6 +201,7 @@ def dot_viz(skos, roots, options):
 options = {
 	'output':   sys.stdout,
 	'filename': None,
+	'format':   'text',
 }
 
 formatters = {

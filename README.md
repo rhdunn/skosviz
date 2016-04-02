@@ -9,4 +9,4 @@ than RDF/XML, you need the `rapper` program installed.
 
 The `skosviz` project is released under the GPL version 3 or later license.
 
-Copyright (C) 2011-2015 Reece H. Dunn
+Copyright (C) 2011-2016 Reece H. Dunn
