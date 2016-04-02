@@ -34,6 +34,7 @@ class RdfNamespace:
 
 rdf  = RdfNamespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
 dc   = RdfNamespace('http://purl.org/dc/elements/1.1/')
+dct  = RdfNamespace('http://purl.org/dc/terms/')
 skos = RdfNamespace('http://www.w3.org/2004/02/skos/core#')
 
 def parse_rdf(filename, input_format=None):
@@ -133,7 +134,7 @@ def parse_skos(filename):
 		node.add_relations('related', [attr(a, rdf.resource) for a in select_all(c, skos.related, skos.relatedMatch)])
 	for c in select(dom, skos.ConceptScheme):
 		ref      = getref(c)
-		name     = text(select_any(c, dc.title, skos.prefLabel)[0])
+		name     = text(select_any(c, dc.title, dct.title, skos.prefLabel)[0])
 		children = [attr(a, rdf.resource) for a in select(c, skos.hasTopConcept)]
 		ret.refs[ref] = ConceptNode('ConceptScheme', ref, name, [], children)
 		for n in children:
