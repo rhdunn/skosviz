@@ -99,6 +99,8 @@ testcases = [
 	{'filename': 'skos-core/ConceptScheme-dc-title.rdf', 'dot': 'skos-core/ConceptScheme-dc-title.dot'},
 	{'filename': 'skos-core/ConceptScheme-dct-title.rdf', 'text': 'skos-core/ConceptScheme-dc-title.txt'},
 	{'filename': 'skos-core/ConceptScheme-dct-title.rdf', 'dot': 'skos-core/ConceptScheme-dc-title.dot'},
+	{'filename': 'skos-core/Concept-skos-prefLabel.rdf', 'text': 'skos-core/Concept-skos-prefLabel.txt'},
+	{'filename': 'skos-core/Concept-skos-prefLabel.rdf', 'dot': 'skos-core/Concept-skos-prefLabel.dot'},
 	{'filename': 'rdfxml/skos-hasTopConcept.rdf', 'text': 'rdfxml/skos-hasTopConcept.txt'},
 	{'filename': 'rdfxml/skos-altLabel.rdf',      'text': 'rdfxml/skos-altLabel.txt'},
 	{'filename': 'rdfxml/skos-narrower.rdf',      'text': 'rdfxml/skos-narrower.txt'},

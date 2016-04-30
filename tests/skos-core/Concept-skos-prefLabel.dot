@@ -1,0 +1,3 @@
+digraph "SKOS Visualisation" {
+	"http://example.org/skosviz/tests#a" [label="One", shape=none]
+}
