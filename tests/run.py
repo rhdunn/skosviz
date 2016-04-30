@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2010-2011 Reece H. Dunn
+# Copyright (C) 2010-2016 Reece H. Dunn
 #
 # This file is part of skosviz.
 #
@@ -90,7 +90,6 @@ class TestSuite:
 
 testcases = [
 	{'filename': 'rdfxml/skos-hasTopConcept.rdf', 'text': 'rdfxml/skos-hasTopConcept.txt'},
-	{'filename': 'rdfxml/rdf-about.rdf',          'text': 'rdfxml/rdf-about.txt'},
 	{'filename': 'rdfxml/skos-altLabel.rdf',      'text': 'rdfxml/skos-altLabel.txt'},
 	{'filename': 'rdfxml/skos-narrower.rdf',      'text': 'rdfxml/skos-narrower.txt'},
 ]
