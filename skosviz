@@ -98,7 +98,7 @@ def parse_skos(filename):
 		ref = str(c)
 		node = ret.refs[ref] = ConceptNode('ConceptScheme', ref)
 		for _, p, o in graph.triples((c, None, None)):
-			if p in [dc.title, dct.title, skos.prefLabel]:
+			if p in [dc.title, dct.title]:
 				if not node.name:
 					node.name = str(o)
 			elif p == skos.hasTopConcept:

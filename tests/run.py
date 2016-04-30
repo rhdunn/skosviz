@@ -74,6 +74,12 @@ class TestSuite:
 					expect=test['text'],
 					test_expect='expect-pass',
 					format='text')
+			elif 'dot' in test.keys():
+				self.check_command(
+					filename=test['filename'],
+					expect=test['dot'],
+					test_expect='expect-pass',
+					format='dot')
 			else:
 				self.failed = self.failed + 1
 				print 'unknown handler for test case %s' % test
@@ -89,6 +95,10 @@ class TestSuite:
 			raise Exception('Some of the tests failed.')
 
 testcases = [
+	{'filename': 'skos-core/ConceptScheme-dc-title.rdf', 'text': 'skos-core/ConceptScheme-dc-title.txt'},
+	{'filename': 'skos-core/ConceptScheme-dc-title.rdf', 'dot': 'skos-core/ConceptScheme-dc-title.dot'},
+	{'filename': 'skos-core/ConceptScheme-dct-title.rdf', 'text': 'skos-core/ConceptScheme-dc-title.txt'},
+	{'filename': 'skos-core/ConceptScheme-dct-title.rdf', 'dot': 'skos-core/ConceptScheme-dc-title.dot'},
 	{'filename': 'rdfxml/skos-hasTopConcept.rdf', 'text': 'rdfxml/skos-hasTopConcept.txt'},
 	{'filename': 'rdfxml/skos-altLabel.rdf',      'text': 'rdfxml/skos-altLabel.txt'},
 	{'filename': 'rdfxml/skos-narrower.rdf',      'text': 'rdfxml/skos-narrower.txt'},

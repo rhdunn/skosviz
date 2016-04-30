@@ -1,0 +1,3 @@
+digraph "SKOS Visualisation" {
+	"http://example.org/skosviz/tests#test" [label="Dublin\nCore\nTitle\nTest"]
+}
