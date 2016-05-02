@@ -144,6 +144,12 @@ colours = {
 	'broader': 'orange',
 }
 
+def get_relation_name(skos, c):
+	ref = skos.refs.get(c[1], None)
+	if ref:
+		return ref.name
+	return None
+
 def dot_viz_impl(skos, c, options):
 	if c.nodetype == 'ConceptScheme':
 		options['output'].write('\t"%s" [label="%s"]\n' % (c.ref, c.name.replace(' ', '\\n')))
@@ -152,9 +158,10 @@ def dot_viz_impl(skos, c, options):
 	for i, child in enumerate(sorted(c.children, key=lambda c: skos.refs[c].name)):
 		n = skos.refs[child]
 		options['output'].write('\t"%s" -> "%s"\n' % (c.ref, n.ref))
-	for i, (t, child) in enumerate(sorted(c.relations, key=lambda c: skos.refs[c[1]].name)):
-		n = skos.refs[child]
-		options['output'].write('\t"%s" -> "%s" [color=%s]\n' % (c.ref, n.ref, colours[t]))
+	for i, (t, child) in enumerate(sorted(c.relations, key=lambda c: get_relation_name(skos, c))):
+		n = skos.refs.get(child, None)
+		if n:
+			options['output'].write('\t"%s" -> "%s" [color=%s]\n' % (c.ref, n.ref, colours[t]))
 
 def dot_viz(skos, roots, options):
 	options['output'].write('digraph "SKOS Visualisation" {\n')
