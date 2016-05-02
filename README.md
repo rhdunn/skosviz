@@ -4,6 +4,9 @@
 - [SKOS Core Support](#skos-core-support)
   - [Classes](#classes)
   - [Properties](#properties)
+- [SKOS-XL Support](#skos-xl-support)
+  - [Classes](#classes-1)
+  - [Properties](#properties-1)
 - [License](#license)
 
 ----------
@@ -70,6 +73,24 @@ This will install the `LIBRARY` python package.
 | [scopeNote](http://www.w3.org/2004/02/skos/core#scopeNote)                   | No        |
 | [semanticRelation](http://www.w3.org/2004/02/skos/core#semanticRelation)     | No        |
 | [topConceptOf](http://www.w3.org/2004/02/skos/core#topConceptOf)             | No        |
+
+## SKOS-XL Support
+
+### Classes
+
+| Class                                            | Supported |
+|--------------------------------------------------|-----------|
+| [Label](http://www.w3.org/2008/05/skos-xl#Label) | No        |
+
+### Properties
+
+| Properties                                                       | Supported |
+|------------------------------------------------------------------|-----------|
+| [altLabel](http://www.w3.org/2008/05/skos-xl#altLabel)           | No        |
+| [hiddenLabel](http://www.w3.org/2008/05/skos-xl#hiddenLabel)     | No        |
+| [labelRelation](http://www.w3.org/2008/05/skos-xl#labelRelation) | No        |
+| [literalForm](http://www.w3.org/2008/05/skos-xl#literalForm)     | No        |
+| [prefLabel](http://www.w3.org/2008/05/skos-xl#prefLabel)         | No        |
 
 ## License
 
