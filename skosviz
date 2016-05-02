@@ -82,14 +82,18 @@ def parse_skos(ret, filename):
 					node.name = str(o)
 			elif p in [skos.altLabel, skos.notation]:
 				node.alt.append(str(o))
-			elif p in [skos.narrower, skos.narrowMatch, skos.narrowerTransitive]:
+			elif p in [skos.narrower, skos.narrowerTransitive]:
 				node.children.append(str(o))
-			elif p == skos.exactMatch:
-				node.add_relation('exact', str(o))
-			elif p == skos.closeMatch:
-				node.add_relation('close', str(o))
-			elif p in [skos.broader, skos.broadMatch, skos.broarderTransitive]:
+			elif p in [skos.broader, skos.broarderTransitive]:
 				node.add_relation('broader', str(o))
+			elif p == skos.exactMatch:
+				node.add_relation('exactMatch', str(o))
+			elif p == skos.closeMatch:
+				node.add_relation('closeMatch', str(o))
+			elif p == skos.broadMatch:
+				node.add_relation('broadMatch', str(o))
+			elif p == skos.narrowMatch:
+				node.add_relation('narrowMatch', str(o))
 			elif p in [skos.related, skos.relatedMatch]:
 				node.add_relation('related', str(o))
 
@@ -137,9 +141,11 @@ def tree_viz(skos, roots, options):
 
 colours = {
 	'related': 'red',
-	'exact': 'blue',
-	'close': 'teal',
+	'exactMatch': 'blue',
+	'closeMatch': 'teal',
 	'broader': 'orange',
+	'broadMatch': 'forestgreen',
+	'narrowMatch': 'deeppink',
 }
 
 def get_relation_name(skos, c):
