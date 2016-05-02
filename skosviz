@@ -70,8 +70,7 @@ class SkosLibrary:
 	def __init__(self):
 		self.refs = {}
 
-def parse_skos(filename):
-	ret   = SkosLibrary()
+def parse_skos(ret, filename):
 	graph = parse_rdf(filename)
 
 	for c, _, _ in graph.triples((None, rdf.type, skos.Concept)):
@@ -107,7 +106,6 @@ def parse_skos(filename):
 	for ref, c in ret.refs.items():
 		for n in c.children:
 			ret.refs[n].parent = ref
-	return ret
 
 # Text Formatter
 
@@ -173,7 +171,7 @@ def dot_viz(skos, roots, options):
 
 options = {
 	'output':   sys.stdout,
-	'filename': None,
+	'filename': [],
 	'format':   'text',
 }
 
@@ -183,7 +181,7 @@ formatters = {
 }
 
 def usage():
-	sys.stdout.write("""usage: skosviz OPTIONS skos-file
+	sys.stdout.write("""usage: skosviz OPTIONS skos-file..
 where OPTIONS are:
     -o FILE, --output FILE     save the visualisation to FILE (or - for stdout).
     -f FORMAT, --format FORMAT the file format for the output:
@@ -205,9 +203,9 @@ try:
 			elif arg in ['-f', '--format']:
 				opt = 'format'
 			else:
-				if options['filename'] or arg.startswith('-'):
+				if arg.startswith('-'):
 					usage()
-				options['filename'] = arg
+				options['filename'].append(arg)
 		else:
 			if opt == 'output':
 				if arg != '-':
@@ -220,15 +218,17 @@ try:
 				options[opt] = arg
 			opt = None
 
-	if not options['filename']:
+	if len(options['filename']) == 0:
 		usage()
 
-	skos = parse_skos(options['filename'])
+	data = SkosLibrary()
+	for filename in options['filename']:
+		parse_skos(data, filename)
 	roots = []
-	for c in sorted(skos.refs.values(), key=lambda c: c.name):
+	for c in sorted(data.refs.values(), key=lambda c: c.name):
 		if not c.parent:
 			roots.append(c)
-	formatters[options['format']](skos, roots, options)
+	formatters[options['format']](data, roots, options)
 except:
 	cleanup(options)
 	raise
