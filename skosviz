@@ -95,8 +95,8 @@ def parse_skos(ret, filename):
 					node.children.append(oref)
 			elif p in [skos.broader, skos.broarderTransitive]:
 				onode = create_concept(ret, oref)
-				if not ref in node.children:
-					onode.add_relation('broader', ref)
+				if not ref in onode.children:
+					onode.children.append(ref)
 			elif p == skos.exactMatch:
 				node.add_relation('exactMatch', oref)
 			elif p == skos.closeMatch:
