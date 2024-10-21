@@ -96,4 +96,4 @@ This will install the `LIBRARY` python package.
 
 The `skosviz` project is released under the GPL version 3 or later license.
 
-Copyright (C) 2011-2016 Reece H. Dunn
+Copyright (C) 2011-2016, 2024 Reece H. Dunn

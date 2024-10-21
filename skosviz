@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011-2016 Reece H. Dunn
+# Copyright (C) 2011-2016, 2024 Reece H. Dunn
 #
 # This file is part of skosviz.
 #
@@ -42,7 +42,7 @@ def parse_rdf(filename, input_format=None):
 			fmt = 'nt' # N-Triples
 
 	graph = rdflib.Graph()
-	graph.load(filename, format=fmt)
+	graph.parse(filename, format=fmt)
 	return graph
 
 # SKOS Object Model
