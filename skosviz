@@ -77,35 +77,37 @@ def parse_skos(ret, filename):
 		ref = str(c)
 		node = ret.refs[ref] = ConceptNode('Concept', ref)
 		for _, p, o in graph.triples((c, None, None)):
+			oref = str(o)
 			if p == skos.prefLabel:
 				if not node.name:
-					node.name = str(o)
+					node.name = oref
 			elif p in [skos.altLabel, skos.notation]:
-				node.alt.append(str(o))
+				node.alt.append(oref)
 			elif p in [skos.narrower, skos.narrowerTransitive]:
-				node.children.append(str(o))
+				node.children.append(oref)
 			elif p in [skos.broader, skos.broarderTransitive]:
-				node.add_relation('broader', str(o))
+				node.add_relation('broader', oref)
 			elif p == skos.exactMatch:
-				node.add_relation('exactMatch', str(o))
+				node.add_relation('exactMatch', oref)
 			elif p == skos.closeMatch:
-				node.add_relation('closeMatch', str(o))
+				node.add_relation('closeMatch', oref)
 			elif p == skos.broadMatch:
-				node.add_relation('broadMatch', str(o))
+				node.add_relation('broadMatch', oref)
 			elif p == skos.narrowMatch:
-				node.add_relation('narrowMatch', str(o))
+				node.add_relation('narrowMatch', oref)
 			elif p in [skos.related, skos.relatedMatch]:
-				node.add_relation('related', str(o))
+				node.add_relation('related', oref)
 
 	for c, _, _ in graph.triples((None, rdf.type, skos.ConceptScheme)):
 		ref = str(c)
 		node = ret.refs[ref] = ConceptNode('ConceptScheme', ref)
 		for _, p, o in graph.triples((c, None, None)):
+			oref = str(o)
 			if p in [dc.title, dct.title]:
 				if not node.name:
-					node.name = str(o)
+					node.name = oref
 			elif p == skos.hasTopConcept:
-				node.children.append(str(o))
+				node.children.append(oref)
 
 	for ref, c in ret.refs.items():
 		for n in c.children:
