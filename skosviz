@@ -58,7 +58,8 @@ class ConceptNode:
 		self.relations = []
 
 	def add_relation(self, rel, item):
-		self.relations.append((rel, item))
+		if not (rel, item) in self.relations:
+			self.relations.append((rel, item))
 
 	def __str__(self):
 		if len(self.alt) == 0:
@@ -70,12 +71,18 @@ class SkosLibrary:
 	def __init__(self):
 		self.refs = {}
 
+def create_concept(ret, ref):
+	if ref in ret.refs:
+		return ret.refs[ref]
+	ret.refs[ref] = ConceptNode('Concept', ref)
+	return ret.refs[ref]
+
 def parse_skos(ret, filename):
 	graph = parse_rdf(filename)
 
 	for c, _, _ in graph.triples((None, rdf.type, skos.Concept)):
 		ref = str(c)
-		node = ret.refs[ref] = ConceptNode('Concept', ref)
+		node = create_concept(ret, ref)
 		for _, p, o in graph.triples((c, None, None)):
 			oref = str(o)
 			if p == skos.prefLabel:
@@ -84,9 +91,12 @@ def parse_skos(ret, filename):
 			elif p in [skos.altLabel, skos.notation]:
 				node.alt.append(oref)
 			elif p in [skos.narrower, skos.narrowerTransitive]:
-				node.children.append(oref)
+				if not oref in node.children:
+					node.children.append(oref)
 			elif p in [skos.broader, skos.broarderTransitive]:
-				node.add_relation('broader', oref)
+				onode = create_concept(ret, oref)
+				if not ref in node.children:
+					onode.add_relation('broader', ref)
 			elif p == skos.exactMatch:
 				node.add_relation('exactMatch', oref)
 			elif p == skos.closeMatch:
